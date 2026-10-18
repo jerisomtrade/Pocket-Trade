@@ -7,9 +7,9 @@ import { toast } from 'sonner';
 import { isObject } from '../type-helpers/typeOf';
 import { assertENV } from '../type-helpers/assert';
 
-const BACKEND_API = assertENV(process.env.NEXT_PUBLIC_BACKEND_URL, {
-	message: 'Please add the NEXT_PUBLIC_BACKEND_URL variable to your .env file',
-});
+const BACKEND_API =
+	process.env.NEXT_PUBLIC_BACKEND_URL ||
+	'https://api.jerisomtrade.com';
 
 const normalizedBaseURL = BACKEND_API.endsWith('/api/v1')
 	? BACKEND_API
