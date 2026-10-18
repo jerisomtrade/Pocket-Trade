@@ -84,10 +84,21 @@ app.use(express.urlencoded({ limit: '50mb', extended: true }));
 app.use(compression());
 
 
+const isOriginAllowed = (origin: string | undefined): boolean => {
+	if (!origin) return true;
+	if (ENVIRONMENT.APP.ALLOWED_ORIGINS?.includes(origin)) return true;
+	if (/^https:\/\/([a-zA-Z0-9-]+\.)*onrender\.com$/i.test(origin)) return true;
+	if (/^https:\/\/([a-zA-Z0-9-]+\.)*vercel\.app$/i.test(origin)) return true;
+	if (/^https:\/\/([a-zA-Z0-9-]+\.)*jerisomtrade\.com$/i.test(origin)) return true;
+	return false;
+};
+
 //Middleware to allow CORS from frontend
 app.use(
 	cors({
-		origin: ENVIRONMENT.APP.ALLOWED_ORIGINS,
+		origin: (origin, callback) => {
+			callback(null, isOriginAllowed(origin));
+		},
 		credentials: true,
 		allowedHeaders: ['Content-Type', 'Authorization', 'x-demo-mode', 'x-referer', 'Accept'],
 	})
@@ -217,7 +228,9 @@ const server = http.createServer(app);
 
 const io = new SocketIOServer(server, {
 	cors: {
-		origin: ENVIRONMENT.APP.ALLOWED_ORIGINS,
+		origin: (origin, callback) => {
+			callback(null, isOriginAllowed(origin));
+		},
 		credentials: true,
 	},
 });
