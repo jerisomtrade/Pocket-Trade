@@ -14,6 +14,8 @@ const parseAllowedOrigins = (): string[] => {
 		'http://localhost:3001',
 		'http://localhost:4000',
 		'http://localhost:5000',
+		'https://pockettrade-kq0c.onrender.com',
+		'https://pockettrade-be.onrender.com',
 		'https://pockettrade-fe.vercel.app',
 		'https://copytrade-admin.vercel.app',
 	];

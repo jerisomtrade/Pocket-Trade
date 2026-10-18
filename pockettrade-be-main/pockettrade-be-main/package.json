@@ -4,7 +4,7 @@
 	"description": "Expressjs project generated using startease CLI tool",
 	"main": "server.js",
 	"scripts": {
-		"start": "node -r dotenv/config -r module-alias/register build/server.js",
+		"start": "npm run build && node -r dotenv/config -r module-alias/register build/server.js",
 		"start-prod": "npm run build && npm run migrate && npm run seed && node -r module-alias/register build/server.js",
 		"migrate": "npx ts-node -P tsconfig.migrate.json --transpile-only -r dotenv/config ./node_modules/knex/bin/cli.js migrate:latest --knexfile knexfile.js",
 		"migrate:latest": "npm run migrate",

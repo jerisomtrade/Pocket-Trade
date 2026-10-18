@@ -93,6 +93,22 @@ const isOriginAllowed = (origin: string | undefined): boolean => {
 	return false;
 };
 
+// Bulletproof CORS headers middleware
+app.use((req: Request, res: Response, next: NextFunction): void => {
+	const origin = req.headers.origin as string | undefined;
+	if (origin && isOriginAllowed(origin)) {
+		res.setHeader('Access-Control-Allow-Origin', origin);
+		res.setHeader('Access-Control-Allow-Credentials', 'true');
+		res.setHeader('Access-Control-Allow-Methods', 'GET,HEAD,PUT,PATCH,POST,DELETE,OPTIONS');
+		res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization, x-demo-mode, x-referer, Accept, Origin, X-Requested-With');
+	}
+	if (req.method === 'OPTIONS') {
+		res.sendStatus(204);
+		return;
+	}
+	next();
+});
+
 //Middleware to allow CORS from frontend
 app.use(
 	cors({
@@ -100,7 +116,7 @@ app.use(
 			callback(null, isOriginAllowed(origin));
 		},
 		credentials: true,
-		allowedHeaders: ['Content-Type', 'Authorization', 'x-demo-mode', 'x-referer', 'Accept'],
+		allowedHeaders: ['Content-Type', 'Authorization', 'x-demo-mode', 'x-referer', 'Accept', 'Origin', 'X-Requested-With'],
 	})
 );
 
