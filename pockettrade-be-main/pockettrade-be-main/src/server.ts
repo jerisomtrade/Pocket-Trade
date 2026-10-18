@@ -89,6 +89,7 @@ const isOriginAllowed = (origin: string | undefined): boolean => {
 	if (ENVIRONMENT.APP.ALLOWED_ORIGINS?.includes(origin)) return true;
 	if (/^https:\/\/([a-zA-Z0-9-]+\.)*onrender\.com$/i.test(origin)) return true;
 	if (/^https:\/\/([a-zA-Z0-9-]+\.)*vercel\.app$/i.test(origin)) return true;
+	if (/^https:\/\/([a-zA-Z0-9-]+\.)*netlify\.app$/i.test(origin)) return true;
 	if (/^https:\/\/([a-zA-Z0-9-]+\.)*jerisomtrade\.com$/i.test(origin)) return true;
 	return false;
 };
