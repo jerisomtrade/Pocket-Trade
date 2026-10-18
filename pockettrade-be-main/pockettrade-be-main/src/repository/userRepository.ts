@@ -1,0 +1,210 @@
+import { knexDb } from '@/common/config';
+import { IUser, Statistics, UserStatistics } from '@/common/interfaces';
+import { DateTime } from 'luxon';
+
+class UserRepository {
+	create = async (payload: Partial<IUser>) => {
+		return await knexDb.table('users').insert(payload).returning('*');
+	};
+
+	findById = async (id: string): Promise<IUser | null> => {
+		return await knexDb.table('users').where({ id }).first();
+	};
+
+	findByEmail = async (email: string): Promise<IUser | null> => {
+		return await knexDb.table('users').where({ email }).first();
+	};
+
+	findByPhone = async (phone: string): Promise<IUser | null> => {
+		return await knexDb.table('users').where({ phone }).first();
+	};
+
+	findByUsername = async (username: string): Promise<IUser | null> => {
+		return await knexDb.table('users').where({ username }).first();
+	};
+
+	findByEmailOrPhone = async (email: string, phone: string): Promise<IUser | null> => {
+		return await knexDb.table('users').where({ email }).orWhere({ phone }).first();
+	};
+
+	findByPasswordResetToken = async (passwordResetToken: string): Promise<IUser | null> => {
+		return await knexDb
+			.table('users')
+			.where({ passwordResetToken })
+			.where('passwordResetExpires', '>', DateTime.now().toJSDate())
+			.where({ isSuspended: false })
+			.first();
+	};
+
+	findByReferralCode = async (referralCode: string): Promise<IUser | null> => {
+		return await knexDb.table('users').where({ referralCode }).first();
+	};
+
+	incrementReferralCredits = async (userId: string, amount: number): Promise<IUser[]> => {
+		// First, get the current referralCredits value
+		const user = await this.findById(userId);
+
+		if (!user) {
+			throw new Error('User not found');
+		}
+
+		// Calculate the new referralCredits value
+		const currentCredits = user.referralCredits || 0;
+		const newCredits = currentCredits + amount;
+
+		// Update the user with the new referralCredits value
+		return await knexDb('users')
+			.where({ id: userId })
+			.update({
+				referralCredits: newCredits,
+				updated_at: DateTime.now().toJSDate(),
+			})
+			.returning('*');
+	};
+
+	findByVerificationToken = async (verificationToken: string): Promise<IUser | null> => {
+		return await knexDb
+			.table('users')
+			.where({ verificationToken })
+			.where('verificationTokenExpires', '>', DateTime.now().toJSDate())
+			.first();
+	};
+
+	update = async (id: string, payload: Partial<IUser>): Promise<IUser[]> => {
+		return await knexDb('users')
+			.where({ id })
+			.update({ ...payload, updated_at: DateTime.now().toJSDate() })
+			.returning('*');
+	};
+
+	findAllQuery = () => {
+		return knexDb.table('users').orderBy('created_at', 'desc');
+	};
+
+	findAll = async () => {
+		return await this.findAllQuery();
+	};
+
+	findByRoleQuery = (role: string) => {
+		return knexDb.table('users').where({ role });
+	};
+
+	findByRole = async (role: string) => {
+		return await this.findByRoleQuery(role);
+	};
+
+	findByIsSuspendedQuery = (isSuspended: boolean) => {
+		return knexDb.table('users').where({ isSuspended });
+	};
+
+	findByIsSuspended = async (isSuspended: boolean) => {
+		return await this.findByIsSuspendedQuery(isSuspended);
+	};
+
+	findByIsDeletedQuery = (isDeleted: boolean) => {
+		return knexDb.table('users').where({ isDeleted });
+	};
+
+	findByIsDeleted = async (isDeleted: boolean) => {
+		return await this.findByIsDeletedQuery(isDeleted);
+	};
+
+	updateCompanyPhone = async (id: number, payload: Partial<IUser>): Promise<IUser[]> => {
+		const exists = await knexDb('sys_phone').where({ id }).first();
+		if (exists) {
+			return await knexDb('sys_phone')
+				.where({ id })
+				.update({ ...payload, updated_at: DateTime.now().toJSDate() })
+				.returning('*');
+		} else {
+			return await knexDb('sys_phone')
+				.insert({ ...payload, id, created_at: DateTime.now().toJSDate(), updated_at: DateTime.now().toJSDate() })
+				.returning('*');
+		}
+	};
+
+	getCompanyPhone = async () => {
+		return await knexDb.table('sys_phone').orderBy('created_at', 'desc').first();
+	};
+
+	findStats = async (): Promise<Statistics> => {
+		const totalUsers = await knexDb('users').where({ isDeleted: false }).count('* as count').first();
+		const totalInvestments = await knexDb('investments').where({ isDeleted: false }).count('* as count').first();
+		const totalKyc = await knexDb('kyc').count('* as count').first();
+		const totalDeposits = await knexDb('transactions')
+			.where({ type: 'Deposit' })
+			.whereIn('status', ['completed'])
+			.sum('amount as total')
+			.first();
+		const totalWithdrawals = await knexDb('transactions')
+			.where({ type: 'withdrawal' })
+			.whereIn('status', ['completed'])
+			.sum('amount as total')
+			.first();
+
+		return {
+			totalUsers: Number(totalUsers?.count) || 0,
+			totalInvestments: Number(totalInvestments?.count) || 0,
+			totalDeposits: Number(totalDeposits?.total) || 0,
+			totalWithdrawals: Number(totalWithdrawals?.total) || 0,
+			totalKyc: Number(totalKyc?.count) || 0,
+		};
+	};
+
+	findUserStats = async (userId: string): Promise<UserStatistics> => {
+		const totalInvested = await knexDb('investments')
+			.where({ userId, isDeleted: false })
+			.sum('amount as total')
+			.first();
+
+		const activeInvestments = await knexDb('investments')
+			.where({ userId, isDeleted: false, isSwitchedOff: false })
+			.count('* as count')
+			.first();
+
+		const completedInvestments = await knexDb('investments')
+			.where({ userId, isDeleted: false, isSwitchedOff: true })
+			.count('* as count')
+			.first();
+
+		const totalDeposits = await knexDb('transactions')
+			.where({ userId, type: 'Deposit', status: 'completed' })
+			.sum('amount as total')
+			.first();
+
+		const pendingDeposits = await knexDb('transactions')
+			.where({ userId, type: 'Deposit', status: 'pending' })
+			.sum('amount as total')
+			.first();
+
+		const totalWithdrawals = await knexDb('transactions')
+			.where({ userId, type: 'withdrawal', status: 'completed' })
+			.sum('amount as total')
+			.first();
+
+		const pendingWithdrawals = await knexDb('transactions')
+			.where({ userId, type: 'withdrawal', status: 'pending' })
+			.sum('amount as total')
+			.first();
+
+		const userProfile = await this.findById(userId);
+
+		return {
+			totalInvested: Number(totalInvested?.total) || 0,
+			totalProfit: Number(userProfile?.totalProfit) || 0,
+			activeInvestments: Number(activeInvestments?.count) || 0,
+			completedInvestments: Number(completedInvestments?.count) || 0,
+			roi: Number(userProfile?.dailyProfitChange) || 0,
+			totalDeposits: Number(totalDeposits?.total) || 0,
+			totalWithdrawals: Number(totalWithdrawals?.total) || 0,
+			pendingDeposits: Number(pendingDeposits?.total) || 0,
+			pendingWithdrawals: Number(pendingWithdrawals?.total) || 0,
+		};
+	};
+
+	findAllAdmins = async (): Promise<IUser[]> => {
+		return knexDb('users').where('role', 'admin').andWhere('isDeleted', false);
+	};
+}
+
+export const userRepository = new UserRepository();

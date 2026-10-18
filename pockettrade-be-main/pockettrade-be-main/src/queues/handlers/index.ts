@@ -1,0 +1,334 @@
+// import {
+// 	EmailJobData,
+// 	LoginEmailData,
+// 	ResetPasswordData,
+// 	ForgotPasswordData,
+// 	WelcomeEmailData,
+// 	SignUpEmailData,
+// 	KycData,
+// 	ProcessingDepositData,
+// 	SuccessfulDepositData,
+// 	FailedDepositData,
+// 	ProcessingWithdrawalData,
+// 	SuccessfulWithdrawalData,
+// 	FailedWithdrawalData,
+// 	NewMessageData,
+// 	AdminNewMessageData,
+// } from '@/common/interfaces';
+// import { logger } from '@/common/utils';
+// import nodemailer from 'nodemailer';
+// import { ENVIRONMENT } from 'src/common/config';
+// import {
+// 	forgotPasswordEmail,
+// 	loginEmail,
+// 	resetPasswordEmail,
+// 	signUpEmail,
+// 	welcomeEmail,
+// 	KycEmail,
+// 	DepositProcessingEmail,
+// 	DepositSuccessEmail,
+// 	DepositFailedEmail,
+// 	WithdrawalProcessingEmail,
+// 	WithdrawalSuccessEmail,
+// 	WithdrawalFailedEmail,
+// 	NewMessageEmail,
+// 	AdminNewMessageEmail,
+// } from '../templates';
+// import { Job } from 'bullmq';
+
+// const transporter = nodemailer.createTransport({
+// 	//service: 'gmail',
+// 	// host: 'smtp.zoho.com',
+// 	// port: 465, // SSL
+// 	// secure: true, // use true for port 465
+// 	host: 'smtp.zeptomail.com',
+// 	port: 587,
+// 	secure: false,
+// 	auth: {
+// 		user: ENVIRONMENT.EMAIL.GMAIL_USER,
+// 		pass: ENVIRONMENT.EMAIL.GMAIL_PASSWORD,
+// 	},
+// });
+
+// export const sendEmail = async (job: Job<EmailJobData>) => {
+// 	const { type, data } = job.data;
+
+// 	let htmlContent: string;
+// 	let subject: string;
+
+// 	logger.info(`Sending email with type: ${type}`);
+
+// 	switch (type) {
+// 		case 'signUpEmail':
+// 			htmlContent = signUpEmail(data as SignUpEmailData);
+// 			subject = 'Verify your email to get started with JerisomTrade';
+// 			break;
+// 		case 'welcomeEmail':
+// 			htmlContent = welcomeEmail(data as WelcomeEmailData);
+// 			subject = 'Welcome to JerisomTrade';
+// 			break;
+// 		case 'loginEmail':
+// 			htmlContent = loginEmail(data as LoginEmailData);
+// 			subject = 'Login Alert';
+// 			break;
+// 		case 'forgotPassword':
+// 			htmlContent = forgotPasswordEmail(data as ForgotPasswordData);
+// 			subject = 'Forgot Password';
+// 			break;
+// 		case 'resetPassword':
+// 			htmlContent = resetPasswordEmail(data as ResetPasswordData);
+// 			subject = 'Reset Password';
+// 			break;
+// 		case 'kyc': {
+// 			const kycData = data as KycData;
+// 			htmlContent = KycEmail(kycData);
+// 			subject = kycData.status === 'approved' ? 'KYC Approved' : 'KYC Rejected';
+// 			break;
+// 		}
+// 		case 'processingDeposit':
+// 			htmlContent = DepositProcessingEmail(data as ProcessingDepositData);
+// 			subject = 'Your deposit is being processed';
+// 			break;
+// 		case 'successfulDeposit':
+// 			htmlContent = DepositSuccessEmail(data as SuccessfulDepositData);
+// 			subject = 'Successful Deposit';
+// 			break;
+// 		case 'failedDeposit':
+// 			htmlContent = DepositFailedEmail(data as FailedDepositData);
+// 			subject = 'Failed Deposit';
+// 			break;
+// 		case 'processingWithdrawal':
+// 			htmlContent = WithdrawalProcessingEmail(data as ProcessingWithdrawalData);
+// 			subject = 'Your withdrawal request is being processed';
+// 			break;
+// 		case 'successfulWithdrawal':
+// 			htmlContent = WithdrawalSuccessEmail(data as SuccessfulWithdrawalData);
+// 			subject = 'Successful Withdrawal';
+// 			break;
+// 		case 'failedWithdrawal':
+// 			htmlContent = WithdrawalFailedEmail(data as FailedWithdrawalData);
+// 			subject = 'Failed Withdrawal';
+// 			break;
+// 		case 'newMessage':
+// 			htmlContent = NewMessageEmail(data as NewMessageData);
+// 			subject = 'New Message Alert';
+// 			break;
+// 		case 'adminNewMessage':
+// 			htmlContent = AdminNewMessageEmail(data as AdminNewMessageData);
+// 			subject = 'New Message Alert';
+// 			break;
+// 		// Handle other email types...
+// 		default:
+// 			throw new Error(`No template found for email type: ${type}`);
+// 	}
+
+// 	const mailOptions = {
+// 		from: `"JerisomTrade" <support@jerisomtrade.com>`,
+// 		to: data.to,
+// 		subject: subject,
+// 		html: htmlContent,
+// 	};
+
+// 	try {
+// 		const dispatch = await transporter.sendMail(mailOptions);
+// 		console.log(dispatch);
+// 		logger.info(`Email successfully sent to ${data.to}`);
+// 	} catch (error) {
+// 		console.error(error);
+// 		logger.error(`Failed to send email to ${data.to}: ${error}`);
+// 	}
+// };
+
+import {
+	EmailJobData,
+	LoginEmailData,
+	ResetPasswordData,
+	ForgotPasswordData,
+	WelcomeEmailData,
+	SignUpEmailData,
+	KycData,
+	ProcessingDepositData,
+	SuccessfulDepositData,
+	FailedDepositData,
+	ProcessingWithdrawalData,
+	SuccessfulWithdrawalData,
+	FailedWithdrawalData,
+	NewMessageData,
+	AdminNewMessageData,
+	AdminNewDepositData,
+	BroadcastEmailData,
+	WalletConnectedData,
+} from '@/common/interfaces';
+import { logger } from '@/common/utils';
+import { Resend } from 'resend';
+import { ENVIRONMENT } from '@/common/config';
+import {
+	forgotPasswordEmail,
+	loginEmail,
+	resetPasswordEmail,
+	signUpEmail,
+	welcomeEmail,
+	KycEmail,
+	DepositProcessingEmail,
+	DepositSuccessEmail,
+	DepositFailedEmail,
+	WithdrawalProcessingEmail,
+	WithdrawalSuccessEmail,
+	WithdrawalFailedEmail,
+	NewMessageEmail,
+	AdminNewMessageEmail,
+	AdminNewDepositEmail,
+	BroadcastEmail,
+	WalletConnectedEmail,
+} from '../templates';
+import { Job } from 'bullmq';
+
+// Lazy-load Resend so server does not crash if RESEND_API_KEY is empty
+const getResendClient = () => {
+	const key = ENVIRONMENT.EMAIL.RESEND_API_KEY;
+	if (!key || !key.trim()) return null;
+	return new Resend(key);
+};
+
+const EMAIL_TIMEOUT = 30000; // 30 seconds
+
+export const sendEmail = async (job: Job<EmailJobData>) => {
+	const { type, data } = job.data;
+
+	let htmlContent: string;
+	let subject: string;
+
+	logger.info(`Sending email with type: ${type}`);
+
+	const companyName = ENVIRONMENT.APP.COMPANY_NAME || 'PocketTrade';
+	const fromAddress = ENVIRONMENT.EMAIL.FROM_ADDRESS || `${companyName} <support@updates.pockettrade.com>`;
+
+	switch (type) {
+		case 'signUpEmail':
+			htmlContent = signUpEmail(data as SignUpEmailData);
+			subject = `Verify your email to get started with ${companyName}`;
+			break;
+		case 'welcomeEmail':
+			htmlContent = welcomeEmail(data as WelcomeEmailData);
+			subject = `Welcome to ${companyName}`;
+			break;
+		case 'loginEmail':
+			htmlContent = loginEmail(data as LoginEmailData);
+			subject = 'Login Alert';
+			break;
+		case 'forgotPassword':
+			htmlContent = forgotPasswordEmail(data as ForgotPasswordData);
+			subject = 'Forgot Password';
+			break;
+		case 'resetPassword':
+			htmlContent = resetPasswordEmail(data as ResetPasswordData);
+			subject = 'Reset Password';
+			break;
+		case 'kyc': {
+			const kycData = data as KycData;
+			htmlContent = KycEmail(kycData);
+			subject = kycData.status === 'approved' ? 'KYC Approved' : 'KYC Rejected';
+			break;
+		}
+		case 'processingDeposit':
+			htmlContent = DepositProcessingEmail(data as ProcessingDepositData);
+			subject = 'Your deposit is being processed';
+			break;
+		case 'successfulDeposit':
+			htmlContent = DepositSuccessEmail(data as SuccessfulDepositData);
+			subject = 'Successful Deposit';
+			break;
+		case 'failedDeposit':
+			htmlContent = DepositFailedEmail(data as FailedDepositData);
+			subject = 'Failed Deposit';
+			break;
+		case 'processingWithdrawal':
+			htmlContent = WithdrawalProcessingEmail(data as ProcessingWithdrawalData);
+			subject = 'Your withdrawal request is being processed';
+			break;
+		case 'successfulWithdrawal':
+			htmlContent = WithdrawalSuccessEmail(data as SuccessfulWithdrawalData);
+			subject = 'Successful Withdrawal';
+			break;
+		case 'failedWithdrawal':
+			htmlContent = WithdrawalFailedEmail(data as FailedWithdrawalData);
+			subject = 'Failed Withdrawal';
+			break;
+		case 'newMessage':
+			htmlContent = NewMessageEmail(data as NewMessageData);
+			subject = 'New Message Alert';
+			break;
+		case 'adminNewMessage':
+			htmlContent = AdminNewMessageEmail(data as AdminNewMessageData);
+			subject = 'New Message Alert';
+			break;
+		case 'adminNewDeposit':
+			htmlContent = AdminNewDepositEmail(data as AdminNewDepositData);
+			subject = 'New Deposit Request';
+			break;
+		case 'broadcastEmail': {
+			const broadcastData = data as BroadcastEmailData;
+			htmlContent = BroadcastEmail(broadcastData);
+			subject = `[${companyName}] ${broadcastData.title}`;
+			break;
+		}
+		case 'walletConnected':
+			htmlContent = WalletConnectedEmail(data as WalletConnectedData);
+			subject = 'Wallet Connection — Pending Verification';
+			break;
+		default:
+			throw new Error(`No template found for email type: ${type}`);
+	}
+
+	try {
+		const resendClient = getResendClient();
+		if (!resendClient) {
+			logger.warn(`RESEND_API_KEY is not configured. Email to ${data.to} with subject "${subject}" was logged: skipped delivery.`);
+			return;
+		}
+
+		const result = await Promise.race([
+			resendClient.emails.send({
+				from: fromAddress,
+				to: data.to,
+				subject,
+				html: htmlContent,
+			}),
+			new Promise((_, reject) => setTimeout(() => reject(new Error('EMAIL_TIMEOUT')), EMAIL_TIMEOUT)),
+		]);
+
+		if (result && typeof result === 'object' && 'error' in result && (result as any).error) {
+			const resendErr = (result as any).error;
+			logger.error(`Resend API Error sending to ${data.to}:`, resendErr);
+			console.error(`\n[Resend Notice] Could not deliver to ${data.to}: ${resendErr.message || JSON.stringify(resendErr)}\n`);
+			return;
+		}
+
+		logger.info(`Email sent to ${data.to}:`, result);
+	} catch (error: unknown) {
+		const errorMessage = error instanceof Error ? error.message : String(error);
+		const errorCode = (error as { code?: string }).code;
+
+		console.error('Email send error:', errorMessage, errorCode);
+
+		if (
+			errorCode === 'ECONNRESET' ||
+			errorCode === 'ETIMEDOUT' ||
+			errorCode === 'ENOTFOUND' ||
+			errorCode === 'ECONNREFUSED' ||
+			errorMessage.includes('ECONNRESET') ||
+			errorMessage.includes('EMAIL_TIMEOUT') ||
+			errorMessage.includes('timeout') ||
+			errorMessage.includes('socket')
+		) {
+			logger.error(`Retryable email error: ${errorMessage}`);
+			throw new Error('RETRYABLE_EMAIL_ERROR');
+		}
+
+		logger.error(`Failed to send email to ${data.to}: ${errorMessage}`);
+		throw error;
+	}
+};
+
+export * from './handleCopyOpen';
+export * from './handleCopyClose';

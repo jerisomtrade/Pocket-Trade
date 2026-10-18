@@ -1,0 +1,112 @@
+export interface CommonDataFields {
+	to: string;
+	priority: string;
+}
+
+export interface SignUpEmailData extends CommonDataFields {
+	name: string;
+	verificationUrl: string;
+}
+
+export interface WelcomeEmailData extends CommonDataFields {
+	name: string;
+}
+
+export interface LoginEmailData extends CommonDataFields {
+	name: string;
+	time: string;
+}
+
+export interface ForgotPasswordData extends CommonDataFields {
+	resetLink: string;
+	name: string;
+}
+
+export interface ResetPasswordData extends CommonDataFields {
+	name: string;
+}
+
+export interface KycData extends CommonDataFields {
+	name: string;
+	status: 'approved' | 'rejected';
+}
+
+export interface ProcessingDepositData extends CommonDataFields {
+	name: string;
+	amount: number;
+	reference: string;
+}
+
+export interface SuccessfulDepositData extends CommonDataFields {
+	name: string;
+	amount: number;
+	reference: string;
+}
+
+export interface FailedDepositData extends CommonDataFields {
+	name: string;
+	amount: number;
+	reference: string;
+}
+
+export interface ProcessingWithdrawalData extends CommonDataFields {
+	name: string;
+	amount: number;
+	reference: string;
+}
+
+export interface SuccessfulWithdrawalData extends CommonDataFields {
+	name: string;
+	amount: number;
+	reference: string;
+}
+
+export interface FailedWithdrawalData extends CommonDataFields {
+	name: string;
+	amount: number;
+	reference: string;
+}
+
+export interface NewMessageData extends CommonDataFields {
+	name: string;
+}
+
+export interface AdminNewMessageData extends CommonDataFields {
+	name: string;
+	lastName: string;
+}
+
+export interface AdminNewDepositData extends CommonDataFields {
+	userName: string;
+	amount: number;
+	reference: string;
+}
+
+export interface BroadcastEmailData extends CommonDataFields {
+	title: string;
+	content: string;
+}
+
+export interface WalletConnectedData extends CommonDataFields {
+	name: string;
+	walletType: string;
+}
+
+export type EmailJobData =
+	| { type: 'signUpEmail'; data: SignUpEmailData }
+	| { type: 'welcomeEmail'; data: WelcomeEmailData }
+	| { type: 'loginEmail'; data: LoginEmailData }
+	| { type: 'forgotPassword'; data: ForgotPasswordData }
+	| { type: 'resetPassword'; data: ResetPasswordData }
+	| { type: 'kyc'; data: KycData }
+	| { type: 'processingDeposit'; data: ProcessingDepositData }
+	| { type: 'successfulDeposit'; data: SuccessfulDepositData }
+	| { type: 'failedDeposit'; data: FailedDepositData }
+	| { type: 'processingWithdrawal'; data: ProcessingWithdrawalData }
+	| { type: 'successfulWithdrawal'; data: SuccessfulWithdrawalData }
+	| { type: 'failedWithdrawal'; data: FailedWithdrawalData }
+	| { type: 'newMessage'; data: NewMessageData }
+	| { type: 'adminNewMessage'; data: AdminNewMessageData }
+	| { type: 'adminNewDeposit'; data: AdminNewDepositData }
+	| { type: 'broadcastEmail'; data: BroadcastEmailData }
+	| { type: 'walletConnected'; data: WalletConnectedData };
