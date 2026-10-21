@@ -9,7 +9,7 @@ import { assertENV } from '../type-helpers/assert';
 
 const BACKEND_API =
 	process.env.NEXT_PUBLIC_BACKEND_URL ||
-	'https://api.jerisomtrade.com';
+	'https://jerisomtrade.onrender.com';
 
 const normalizedBaseURL = BACKEND_API.endsWith('/api/v1')
 	? BACKEND_API
