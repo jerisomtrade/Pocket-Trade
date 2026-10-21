@@ -24,6 +24,7 @@ import {
   ShieldAlert,
   FlaskConical,
   Heart,
+  Shield,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Toaster } from "sonner";
@@ -382,7 +383,28 @@ export default function DashboardLayout({
           )}
         </div>
 
-        {/* Logout */}
+        {/* Command Center (Admin Only) */}
+          {user?.[0]?.role === 'admin' && (
+            <div className="px-6 pb-3 border-b border-white/5">
+              <a
+                href="https://jerisomtrade-command.netlify.app"
+                target="_blank"
+                rel="noopener noreferrer"
+                className={cn(
+                  "flex items-center rounded-xl text-sm font-bold bg-emerald-500/10 border border-emerald-500/30 text-emerald-400 hover:bg-emerald-500/20 hover:text-emerald-300 hover:border-emerald-500/50 hover:shadow-[0_0_20px_rgba(16,185,129,0.2)] transition-all group",
+                  sidebarOpen ? "w-full gap-3 px-4 py-3" : "justify-center p-3"
+                )}
+                title="Command Center"
+              >
+                <Shield className="h-5 w-5 group-hover:scale-110 transition-transform shrink-0" />
+                {(sidebarOpen || mobileSidebarOpen) && (
+                  <span className="truncate">Command Center</span>
+                )}
+              </a>
+            </div>
+          )}
+
+          {/* Logout */}
         <div className="p-6 border-t border-white/5 bg-slate-950/50">
           <button
             onClick={logout}
