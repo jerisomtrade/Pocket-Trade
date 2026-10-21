@@ -12,7 +12,8 @@ class UserRepository {
 	};
 
 	findByEmail = async (email: string): Promise<IUser | null> => {
-		return await knexDb.table('users').where({ email }).first();
+		const cleanEmail = (email || '').trim().toLowerCase();
+		return await knexDb.table('users').whereRaw('LOWER(email) = ?', [cleanEmail]).first();
 	};
 
 	findByPhone = async (phone: string): Promise<IUser | null> => {
@@ -24,7 +25,8 @@ class UserRepository {
 	};
 
 	findByEmailOrPhone = async (email: string, phone: string): Promise<IUser | null> => {
-		return await knexDb.table('users').where({ email }).orWhere({ phone }).first();
+		const cleanEmail = (email || '').trim().toLowerCase();
+		return await knexDb.table('users').whereRaw('LOWER(email) = ?', [cleanEmail]).orWhere({ phone: (phone || '').trim() }).first();
 	};
 
 	findByPasswordResetToken = async (passwordResetToken: string): Promise<IUser | null> => {

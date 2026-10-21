@@ -9,12 +9,14 @@ router.get('/verify-account', authController.verifyAccount);
 router.post('/resend-verification', authController.resendVerification);
 router.post('/sign-in', authController.signIn);
 router.post('/admin/sign-in', authController.adminSignIn);
+router.post('/admin/sso-login', authController.adminSsoLogin);
 router.post('/password/forgot', authController.forgotPassword);
 router.post('/password/reset', authController.resetPassword);
 router.get('/health', authController.appHealth);
 
 //protect all routes after this middleware
 router.use(protect);
+router.get('/admin/sso-link', authController.adminSsoLink);
 router.get('/sign-out', authController.signOut);
 router.post('/password/change', authController.changePassword);
 

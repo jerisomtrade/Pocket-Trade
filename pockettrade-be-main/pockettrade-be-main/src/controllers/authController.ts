@@ -240,7 +240,8 @@ class AuthController {
 			throw new AppError('Incomplete login data', 401);
 		}
 
-		const user = await userRepository.findByEmail(email);
+		const cleanEmail = String(email).trim().toLowerCase();
+		const user = await userRepository.findByEmail(cleanEmail);
 		if (!user) {
 			throw new AppError('User not found', 404);
 		}
@@ -285,7 +286,68 @@ class AuthController {
 		//login email
 		const loginTime = DateTime.now().toFormat("cccc, LLLL d, yyyy 'at' t");
 		await sendLoginEmail(user.email, user.firstName, loginTime);
-		return AppResponse(res, 200, toJSON([user]), 'User logged in successfully');
+
+		return res.status(200).json({
+			status: 'success',
+			data: toJSON([user]),
+			token: accessToken,
+			refreshToken: refreshToken,
+			message: 'User logged in successfully',
+		});
+	});
+
+	adminSsoLink = catchAsync(async (req: Request, res: Response) => {
+		const user = req.user;
+		if (!user || user.role !== 'admin') {
+			throw new AppError('Forbidden: Only administrators can generate command center links', 403);
+		}
+
+		const ssoToken = createToken(
+			{
+				userId: user.id,
+				role: user.role,
+				purpose: 'admin-sso',
+			},
+			{ expiresIn: '5m' }
+		);
+
+		const adminBaseUrl =
+			process.env.ADMIN_URL || 'https://jerisomtrade-command.netlify.app';
+		const cleanAdminUrl = adminBaseUrl.replace(/\/+$/, '');
+		const targetUrl = `${cleanAdminUrl}/auth/sso?token=${encodeURIComponent(ssoToken)}`;
+
+		return AppResponse(res, 200, { url: targetUrl }, 'SSO link generated successfully');
+	});
+
+	adminSsoLogin = catchAsync(async (req: Request, res: Response) => {
+		const { token } = req.body;
+		if (!token) {
+			throw new AppError('SSO token is required', 400);
+		}
+
+		const decoded = (await verifyToken(token)) as { userId?: string; purpose?: string; role?: string };
+		if (!decoded || decoded.purpose !== 'admin-sso' || !decoded.userId) {
+			throw new AppError('Invalid or expired SSO token', 401);
+		}
+
+		const user = await userRepository.findById(decoded.userId);
+		if (!user || user.role !== 'admin' || user.isSuspended || user.isDeleted) {
+			throw new AppError('Unauthorized access', 403);
+		}
+
+		const accessToken = generateAccessToken(user.id);
+		const refreshToken = generateRefreshToken(user.id);
+
+		setCookie(req, res, 'accessToken', accessToken, parseTokenDuration(ENVIRONMENT.JWT_EXPIRES_IN.ACCESS));
+		setCookie(req, res, 'refreshToken', refreshToken, parseTokenDuration(ENVIRONMENT.JWT_EXPIRES_IN.REFRESH));
+
+		return res.status(200).json({
+			status: 'success',
+			data: toJSON([user]),
+			token: accessToken,
+			refreshToken: refreshToken,
+			message: 'Admin SSO login successful',
+		});
 	});
 
 	signOut = catchAsync(async (req: Request, res: Response) => {

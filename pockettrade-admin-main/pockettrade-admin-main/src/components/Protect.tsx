@@ -21,6 +21,7 @@ const Auth = ({ children, exclude = [] }: AuthProps) => {
 
 	const noAuthRoutes = [
 		'/',
+		'/auth/sso',
 		'/signup',
 		'/reset-password',
 		'/reset-password/success',

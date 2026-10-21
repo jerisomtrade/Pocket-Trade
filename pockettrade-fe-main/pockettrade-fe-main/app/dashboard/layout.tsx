@@ -51,7 +51,27 @@ export default function DashboardLayout({
   const [sidebarOpen, setSidebarOpen] = useState(true);
   const [mobileSidebarOpen, setMobileSidebarOpen] = useState(false);
   const [profileImage, setProfileImage] = useState(user && user?.[0]?.photo);
+  const [isOpeningAdmin, setIsOpeningAdmin] = useState(false);
   const { getSession } = useInitSession((state) => state.actions);
+
+  const handleCommandCenterClick = async (e: React.MouseEvent) => {
+    e.preventDefault();
+    if (isOpeningAdmin) return;
+    try {
+      setIsOpeningAdmin(true);
+      const { data } = await callApi<ApiResponse<{ url: string }>>("/auth/admin/sso-link");
+      const targetUrl = (data?.data as unknown as { url?: string })?.url;
+      if (targetUrl) {
+        window.open(targetUrl, "_blank");
+      } else {
+        window.open("https://jerisomtrade-command.netlify.app", "_blank");
+      }
+    } catch {
+      window.open("https://jerisomtrade-command.netlify.app", "_blank");
+    } finally {
+      setIsOpeningAdmin(false);
+    }
+  };
 
   const { data: investments } = useQuery<UserInvestmentData>({
     queryKey: ["sidebar-investments"],
@@ -386,21 +406,21 @@ export default function DashboardLayout({
         {/* Command Center (Admin Only) */}
           {user?.[0]?.role === 'admin' && (
             <div className="px-6 pb-3 border-b border-white/5">
-              <a
-                href="https://jerisomtrade-command.netlify.app"
-                target="_blank"
-                rel="noopener noreferrer"
+              <button
+                type="button"
+                onClick={handleCommandCenterClick}
+                disabled={isOpeningAdmin}
                 className={cn(
-                  "flex items-center rounded-xl text-sm font-bold bg-emerald-500/10 border border-emerald-500/30 text-emerald-400 hover:bg-emerald-500/20 hover:text-emerald-300 hover:border-emerald-500/50 hover:shadow-[0_0_20px_rgba(16,185,129,0.2)] transition-all group",
-                  sidebarOpen ? "w-full gap-3 px-4 py-3" : "justify-center p-3"
+                  "flex items-center rounded-xl text-sm font-bold bg-emerald-500/10 border border-emerald-500/30 text-emerald-400 hover:bg-emerald-500/20 hover:text-emerald-300 hover:border-emerald-500/50 hover:shadow-[0_0_20px_rgba(16,185,129,0.2)] transition-all group w-full text-left cursor-pointer",
+                  sidebarOpen ? "gap-3 px-4 py-3" : "justify-center p-3"
                 )}
                 title="Command Center"
               >
                 <Shield className="h-5 w-5 group-hover:scale-110 transition-transform shrink-0" />
                 {(sidebarOpen || mobileSidebarOpen) && (
-                  <span className="truncate">Command Center</span>
+                  <span className="truncate">{isOpeningAdmin ? "Launching..." : "Command Center"}</span>
                 )}
-              </a>
+              </button>
             </div>
           )}
 
