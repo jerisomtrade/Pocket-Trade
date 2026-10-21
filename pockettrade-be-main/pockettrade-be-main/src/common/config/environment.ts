@@ -16,6 +16,7 @@ const parseAllowedOrigins = (): string[] => {
 		'http://localhost:5000',
 		'https://jerisomtrade.netlify.app',
 		'https://jerisomtrade-admin.netlify.app',
+		'https://jerisomtrade-command.netlify.app',
 		'https://pockettrade-fe.vercel.app',
 		'https://copytrade-admin.vercel.app',
 	];
